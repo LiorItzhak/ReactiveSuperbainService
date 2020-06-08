@@ -1,13 +1,11 @@
 package com.superbrain
 
 import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import kotlinx.coroutines.*
-import org.apache.kafka.streams.kstream.KStreamBuilder
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
-import org.apache.kafka.streams.KeyValue
+import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
 import org.springframework.boot.Banner
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -34,23 +32,21 @@ open class SuperBrainApplication {
         put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
         put(StreamsConfig.STATE_DIR_CONFIG, "C:\\tmp"); // on Windows
 //        put(StreamsConfig.STATE_DIR_CONFIG , "/tmp"); // on Linux
-
-        //string casting
-        put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().javaClass)
-        put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().javaClass)
+        put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().javaClass)  //string casting
+        put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().javaClass)  //string casting
     }
 
     val fluxMap = mutableMapOf<String, Pair<FluxProcessor<String, String>, FluxSink<String>>>()
-    val builder = KStreamBuilder().apply {
+    val builder = StreamsBuilder().apply {
         stream<String, String>("messege").foreach { key, value ->
-            val obj = gson.fromJson(value, Map::class.java) as Map<String, Any>
+            @Suppress("UNCHECKED_CAST") val obj = gson.fromJson(value, Map::class.java) as Map<String, Any>
             println(value)
             fluxMap[obj["user_id"]]?.second?.next(value)
         }
     }
 
     init {
-        GlobalScope.launch { KafkaStreams(builder, config).start() }
+        GlobalScope.launch { KafkaStreams(builder.build(), config).start() }
     }
 
     @GetMapping("/{userId}")
