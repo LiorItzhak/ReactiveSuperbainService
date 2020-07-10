@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reactive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reactive
+  template:
+    metadata:
+      labels:
+        app: reactive
+    spec:
+      containers:
+        - name: reactive
+          image: gcr.io/superbrain-282909/reactive:latest
+          ports:
+            - containerPort: 5000
+      imagePullSecrets:
+        - name: superbrainkey
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reactive
+spec:
+  type: ClusterIP
+  selector:
+    app: reactive
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reactive-external
+spec:
+  type: LoadBalancer
+  selector:
+    app: reactive
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000

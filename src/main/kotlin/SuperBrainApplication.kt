@@ -29,16 +29,24 @@ open class SuperBrainApplication {
     val gson = Gson()
     val config = Properties().apply {
         put(StreamsConfig.APPLICATION_ID_CONFIG, "application189")
-        put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
-        put(StreamsConfig.STATE_DIR_CONFIG, "C:\\tmp"); // on Windows
-//        put(StreamsConfig.STATE_DIR_CONFIG , "/tmp"); // on Linux
+        put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-demo-parametrix-b70f.aivencloud.com:12744")
+//        put(StreamsConfig.STATE_DIR_CONFIG, "C:\\tmp") // on Windows
+        put(StreamsConfig.STATE_DIR_CONFIG , "/tmp") // on Linux
         put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().javaClass)  //string casting
         put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().javaClass)  //string casting
+        put("security.protocol", "SSL")
+        put("ssl.endpoint.identification.algorithm", "")
+        put("ssl.truststore.location", "client.truststore.jks")
+        put("ssl.truststore.password", "superbrain")
+        put("ssl.keystore.type", "PKCS12")
+        put("ssl.keystore.location", "client.keystore.p12")
+        put("ssl.keystore.password", "superbrain")
+        put("ssl.key.password", "superbrain")
     }
 
     val fluxMap = mutableMapOf<String, Pair<FluxProcessor<String, String>, FluxSink<String>>>()
     val builder = StreamsBuilder().apply {
-        stream<String, String>("messege").foreach { key, value ->
+        stream<String, String>("event").foreach { key, value ->
             @Suppress("UNCHECKED_CAST") val obj = gson.fromJson(value, Map::class.java) as Map<String, Any>
             println(value)
             fluxMap[obj["user_id"]]?.second?.next(value)
